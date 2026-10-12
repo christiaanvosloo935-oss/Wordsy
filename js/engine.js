@@ -139,3 +139,53 @@ export function stock(state, words) {
   const left = Math.max(0, words.length - state.nextIndex);
   return { left, low: left > 0 && left < LOW_STOCK_WORDS, daysLeft: Math.ceil(left / WORDS_PER_DAY), out: left === 0 };
 }
+
+// ---------- Archive ----------
+
+export function archiveDays(state) {
+  const days = [...state.history];
+  const t = state.today;
+  if (t && t.newWordIds.length > 0) days.push({ date: t.date, dayNumber: t.dayNumber, wordIds: t.newWordIds });
+  return days.reverse();
+}
+
+export function searchArchive(days, words, query) {
+  const q = query.trim().toLowerCase();
+  if (!q) return days;
+  const byId = new Map(words.map((w) => [w.id, w]));
+  const matches = (id) => {
+    const w = byId.get(id);
+    return !!w && (w.word.toLowerCase().includes(q) || w.definition.toLowerCase().includes(q));
+  };
+  return days
+    .map((d) => ({ ...d, wordIds: d.wordIds.filter(matches) }))
+    .filter((d) => d.wordIds.length > 0);
+}
+
+// ---------- Past-day practice (in memory only; never touches today) ----------
+
+function practiceCard(ids, counts) {
+  const q = selectNext(ids, counts);
+  return q && { ...q, flipped: false, graded: null };
+}
+
+export function startPractice(wordIds) {
+  return { ids: wordIds, counts: {}, current: practiceCard(wordIds, {}) };
+}
+
+export function practiceFlip(session) {
+  return session.current ? { ...session, current: { ...session.current, flipped: true } } : session;
+}
+
+export function practiceGrade(session, state, knew, now) {
+  const c = session.current;
+  if (!c || c.graded !== null) return { session, state };
+  return {
+    session: { ...session, counts: { ...session.counts, [c.id]: (session.counts[c.id] ?? 0) + 1 }, current: { ...c, graded: knew } },
+    state: { ...state, grades: { ...state.grades, [c.id]: [...(state.grades[c.id] ?? []), { at: now, direction: c.direction, knew }] } },
+  };
+}
+
+export function practiceNext(session) {
+  return { ...session, current: practiceCard(session.ids, session.counts) };
+}
