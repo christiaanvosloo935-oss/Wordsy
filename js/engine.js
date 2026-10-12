@@ -88,16 +88,15 @@ function startQuiz(state) {
   return withToday(state, { screen: q ? { type: 'quiz', ...q, flipped: false, graded: null } : { type: 'empty' } });
 }
 
+// The first visit shows a word; later visits quiz first, then reveal a word
+// while the day is still owed one (so an abandoned visit doesn't cost a word).
 function beginVisit(state, words) {
-  const { visits } = state.today;
-  if (visits === 1) return revealWord(state, words);
-  if (visits <= WORDS_PER_DAY) {
-    const pending = state.nextIndex < words.length;
-    const quizzed = startQuiz(withToday(state, { pendingNewWord: pending }));
-    if (quizzed.today.screen.type === 'empty' && pending) return revealWord(quizzed, words);
-    return quizzed;
-  }
-  return startQuiz(withToday(state, { pendingNewWord: false }));
+  const shown = state.today.newWordIds.length;
+  if (shown === 0) return revealWord(state, words);
+  const pending = shown < WORDS_PER_DAY && state.nextIndex < words.length;
+  const quizzed = startQuiz(withToday(state, { pendingNewWord: pending }));
+  if (quizzed.today.screen.type === 'empty' && pending) return revealWord(quizzed, words);
+  return quizzed;
 }
 
 export function flipQuiz(state) {
@@ -138,6 +137,15 @@ export function toggleRelearn(state, id) {
 export function stock(state, words) {
   const left = Math.max(0, words.length - state.nextIndex);
   return { left, low: left > 0 && left < LOW_STOCK_WORDS, daysLeft: Math.ceil(left / WORDS_PER_DAY), out: left === 0 };
+}
+
+// Small notices shown above the Today screen.
+export function notices(state, words) {
+  const st = stock(state, words);
+  const out = [];
+  if (st.low) out.push(`About ${st.daysLeft} day${st.daysLeft === 1 ? '' : 's'} of words left.`);
+  if (st.out && state.today?.screen.type !== 'empty') out.push("You've seen every word.");
+  return out;
 }
 
 // ---------- Archive ----------

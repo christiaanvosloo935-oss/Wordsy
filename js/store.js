@@ -7,12 +7,30 @@ function defaultStorage() {
   try { return globalThis.localStorage; } catch { return undefined; }
 }
 
-function isValid(s) {
-  return !!s && typeof s === 'object' && s.version === 1 && Array.isArray(s.history)
-    && !!s.grades && typeof s.grades === 'object' && !Array.isArray(s.grades);
+const isObj = (x) => !!x && typeof x === 'object' && !Array.isArray(x);
+const isNum = (x) => typeof x === 'number' && Number.isFinite(x);
+const isIdList = (x, known) => Array.isArray(x) && x.every((id) => typeof id === 'string' && (!known || known.has(id)));
+
+function isValidToday(t, known) {
+  if (t === null) return true;
+  return isObj(t) && typeof t.date === 'string' && isNum(t.dayNumber) && isNum(t.visits)
+    && isIdList(t.newWordIds, known) && isIdList(t.relearnIds, known)
+    && isObj(t.quizCounts) && typeof t.pendingNewWord === 'boolean'
+    && isObj(t.screen) && typeof t.screen.type === 'string'
+    && (t.screen.type === 'empty' || (typeof t.screen.id === 'string' && (!known || known.has(t.screen.id))));
 }
 
-export function load(storage = defaultStorage()) {
+// `known` (optional) is the set of word ids in the list; ids outside it make the record invalid.
+function isValid(s, known) {
+  return isObj(s) && s.version === 1
+    && Number.isInteger(s.nextIndex) && s.nextIndex >= 0
+    && (s.lastHiddenAt === null || isNum(s.lastHiddenAt))
+    && isValidToday(s.today, known)
+    && Array.isArray(s.history) && s.history.every((d) => isObj(d) && typeof d.date === 'string' && isNum(d.dayNumber) && isIdList(d.wordIds, known))
+    && isObj(s.grades);
+}
+
+export function load(storage = defaultStorage(), known = null) {
   let persistent = false;
   let raw = null;
   try {
@@ -29,7 +47,7 @@ export function load(storage = defaultStorage()) {
   if (raw) {
     try {
       const parsed = JSON.parse(raw);
-      if (isValid(parsed)) state = parsed;
+      if (isValid(parsed, known)) state = parsed;
     } catch { /* corrupt: start fresh */ }
   }
   return { state, persistent };

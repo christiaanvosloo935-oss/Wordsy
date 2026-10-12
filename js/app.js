@@ -1,6 +1,6 @@
 // Wires the browser to the engine: lifecycle events in, rendered DOM out.
 import {
-  onForeground, onHidden, flipQuiz, gradeQuiz, advance, stock, WORDS_PER_DAY,
+  initialState, onForeground, onHidden, flipQuiz, gradeQuiz, advance, stock, notices, WORDS_PER_DAY,
   archiveDays, searchArchive, toggleRelearn, isRelearn,
   startPractice, practiceFlip, practiceGrade, practiceNext,
 } from './engine.js';
@@ -15,7 +15,7 @@ const nowParam = new URLSearchParams(location.search).get('now');
 const clockOffset = nowParam && !Number.isNaN(Date.parse(nowParam)) ? Date.parse(nowParam) - Date.now() : 0;
 const now = () => Date.now() + clockOffset;
 
-let { state, persistent } = load();
+let { state, persistent } = load(undefined, new Set(WORDS.map((w) => w.id)));
 
 // UI-only state; none of this is saved.
 let view = 'today';
@@ -214,9 +214,7 @@ function renderChrome() {
   $('dots').innerHTML = Array.from({ length: WORDS_PER_DAY }, (_, i) => `<i class="${i < shown ? 'on' : ''}"></i>`).join('');
   $('dots').setAttribute('aria-label', `${shown} of ${WORDS_PER_DAY} words today`);
 
-  const st = stock(state, WORDS);
-  const banners = [];
-  if (st.low) banners.push(`About ${st.daysLeft} days of words left.`);
+  const banners = notices(state, WORDS);
   if (!persistent) banners.push("Progress can't be saved on this device.");
   $('banners').innerHTML = banners.map((b) => `<p class="banner">${esc(b)}</p>`).join('');
 }
@@ -301,7 +299,14 @@ function foreground() {
 }
 
 document.addEventListener('visibilitychange', () => {
-  if (document.visibilityState === 'visible') foreground();
+  if (document.visibilityState === 'visible') // Backstop: if saved state is unusable in a way validation missed, start fresh rather than show a blank app.
+try {
+  foreground();
+} catch (err) {
+  console.error('Wordsy: resetting unusable saved state', err);
+  state = initialState();
+  foreground();
+}
   else { state = onHidden(state, now()); save(state); }
 });
 window.addEventListener('pagehide', () => { state = onHidden(state, now()); save(state); });
@@ -318,4 +323,11 @@ if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('sw.js').catch(() => { /* offline support is optional */ });
 }
 
-foreground();
+// Backstop: if saved state is unusable in a way validation missed, start fresh rather than show a blank app.
+try {
+  foreground();
+} catch (err) {
+  console.error('Wordsy: resetting unusable saved state', err);
+  state = initialState();
+  foreground();
+}

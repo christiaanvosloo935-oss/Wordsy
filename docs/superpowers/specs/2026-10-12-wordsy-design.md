@@ -53,6 +53,10 @@ now and against the current day.
 | 3 | Recall quiz, then new word #3 |
 | 4+ | Recall quizzes only |
 
+A visit after the first one reveals a new word after its quiz for as long as the
+day has had fewer than 3. That way a visit you left before grading doesn't cost
+the day a word.
+
 - After any quiz has been graded, a **"Another one"** button offers a further
   quiz from the same pool. There's no limit.
 - On visits 2–3 the user can't skip ahead to the new word: it appears once the

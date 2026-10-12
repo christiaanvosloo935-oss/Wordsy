@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
   initialState, onForeground, onHidden, pickQuiz, flipQuiz, gradeQuiz, advance,
-  toggleRelearn, isRelearn, stock,
+  toggleRelearn, isRelearn, stock, notices,
 } from '../js/engine.js';
 import { deepFreeze } from './helpers.js';
 import { W, at, MIN } from './fixtures.js';
@@ -145,4 +145,35 @@ test('inputs are not mutated', () => {
   s = deepFreeze(gradeQuiz(s, true, day1));
   s = deepFreeze(advance(s, W));
   assert.doesNotThrow(() => toggleRelearn(s, 'zzz'));
+});
+
+test('a visit abandoned before grading does not cost the day a word', () => {
+  let s = visit(initialState(), day1);             // word 1
+  s = visit(s, day1 + 2 * H);                      // quiz, left unanswered
+  s = visit(s, day1 + 4 * H);                      // still owed word 2
+  assert.equal(s.today.pendingNewWord, true);
+  s = advance(answer(s), W);
+  assert.deepEqual(s.today.screen, { type: 'word', id: 'bravo' });
+  s = visit(s, day1 + 6 * H);                      // visit 4: still owed word 3
+  assert.equal(s.today.pendingNewWord, true);
+  s = advance(answer(s), W);
+  assert.deepEqual(s.today.screen, { type: 'word', id: 'charlie' });
+  s = visit(s, day1 + 8 * H);
+  assert.equal(s.today.pendingNewWord, false);
+});
+
+test('notices: out of words shows on a quiz, low stock pluralises', () => {
+  const one = W.slice(0, 1);
+  let s = visit(initialState(), day1, one);
+  s = visit(s, day1 + 2 * H, one);
+  assert.deepEqual(notices(s, one), ["You've seen every word."]);
+  const words = Array.from({ length: 100 }, (_, i) => ({ id: `w${i}` }));
+  const base = { today: { screen: { type: 'word' } } };
+  assert.deepEqual(notices({ ...base, nextIndex: 99 }, words), ['About 1 day of words left.']);
+  assert.deepEqual(notices({ ...base, nextIndex: 11 }, words), ['About 30 days of words left.']);
+  assert.deepEqual(notices({ ...base, nextIndex: 10 }, words), []);
+});
+
+test('notices: no out-of-words notice on the empty screen, which already says it', () => {
+  assert.deepEqual(notices({ nextIndex: 1, today: { screen: { type: 'empty' } } }, W.slice(0, 1)), []);
 });

@@ -42,3 +42,23 @@ test('throwing storage gives persistent false and save returns false', () => {
 test('missing storage gives persistent false', () => {
   assert.deepEqual(load(undefined), { state: initialState(), persistent: false });
 });
+
+for (const [name, bad] of [
+  ['missing nextIndex', { version: 1, lastHiddenAt: null, today: null, history: [], grades: {} }],
+  ['today missing fields', { ...initialState(), today: { date: '2026-10-13' } }],
+  ['today screen missing', { ...initialState(), today: { date: '2026-10-13', dayNumber: 1, visits: 1, newWordIds: [], relearnIds: [], quizCounts: {}, pendingNewWord: false } }],
+  ['lastHiddenAt not a number', { ...initialState(), lastHiddenAt: 'yesterday' }],
+]) {
+  test(`load returns fresh state on bad v1 shape: ${name}`, () => {
+    const st = memoryStorage();
+    st.setItem(STORAGE_KEY, JSON.stringify(bad));
+    assert.deepEqual(load(st).state, initialState());
+  });
+}
+
+test('load drops ids that are not in the word list', () => {
+  const st = memoryStorage();
+  const today = { date: '2026-10-13', dayNumber: 1, visits: 1, newWordIds: ['gone'], relearnIds: [], quizCounts: {}, pendingNewWord: false, screen: { type: 'word', id: 'gone' } };
+  st.setItem(STORAGE_KEY, JSON.stringify({ ...initialState(), nextIndex: 1, today }));
+  assert.deepEqual(load(st, new Set(['alpha'])).state, initialState());
+});
