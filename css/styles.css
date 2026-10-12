@@ -1,0 +1,142 @@
+/* Wordsy: one theme family ("Lexicon"), cream by day and navy by night.
+   The theme follows the phone's light/dark setting. */
+:root {
+  --bg: #f5eedf;
+  --fg: #1d1b18;
+  --muted: #776e60;
+  --accent: #2443a8;
+  --on-accent: #ffffff;
+  --card: #fcf8ef;
+  --line: #e4d9c5;
+  --soft: #efe6d3;
+  --display: 'Newsreader', Georgia, 'Times New Roman', serif;
+  --body: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --mono: 'IBM Plex Mono', ui-monospace, Menlo, monospace;
+  --r: 6px;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #151826;
+    --fg: #f1e8d6;
+    --muted: #aaa18f;
+    --accent: #c9b8ff;
+    --on-accent: #151826;
+    --card: #1e2131;
+    --line: #2f3246;
+    --soft: #272a3d;
+    color-scheme: dark;
+  }
+}
+
+* { box-sizing: border-box; }
+html, body { height: 100%; margin: 0; }
+body {
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--body);
+  font-size: 16px;
+  line-height: 1.5;
+  -webkit-text-size-adjust: 100%;
+}
+button { font: inherit; color: inherit; }
+button:focus-visible, summary:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.app {
+  max-width: 480px;
+  margin: 0 auto;
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+  padding-top: env(safe-area-inset-top, 0px);
+}
+
+.top {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 18px 20px 8px;
+  font-size: 0.8rem; color: var(--muted);
+}
+.dots { display: flex; gap: 5px; }
+.dots i { width: 8px; height: 8px; border-radius: 50%; background: var(--line); display: block; }
+.dots i.on { background: var(--accent); }
+
+.banners { display: flex; flex-direction: column; gap: 6px; padding: 0 16px; }
+.banners:empty { display: none; }
+.banner {
+  font-size: 0.82rem; color: var(--muted);
+  background: var(--soft); border-radius: var(--r); padding: 8px 12px;
+}
+
+.view {
+  flex: 1;
+  padding: 6px 16px 24px;
+  display: flex; flex-direction: column; gap: 12px;
+}
+
+/* ---------- Cards ---------- */
+.card { background: var(--card); border: 1px solid var(--line); border-radius: var(--r); padding: 18px; }
+.card.plain { border: 0; background: transparent; padding: 6px 4px; }
+
+.kicker {
+  font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--muted); margin: 0 0 6px; font-weight: 600;
+}
+.word {
+  display: block; width: 100%;
+  white-space: nowrap; overflow: hidden;
+  font-family: var(--display); font-weight: 600;
+  font-size: 2.5rem; line-height: 1.1; letter-spacing: -0.01em;
+  margin: 0;
+}
+.pron { font-family: var(--mono); font-size: 0.82rem; color: var(--muted); margin: 6px 0 0; overflow-wrap: anywhere; }
+.pos { font-family: var(--display); font-style: italic; color: var(--accent); }
+.def { font-family: var(--display); font-size: 1.15rem; line-height: 1.4; margin: 8px 0 0; text-wrap: pretty; }
+
+.ex { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; font-size: 0.92rem; line-height: 1.45; }
+.ex li { padding-left: 12px; border-left: 2px solid var(--line); }
+.ex em { font-style: normal; font-weight: 600; color: var(--accent); }
+
+.note { font-size: 0.82rem; color: var(--muted); text-align: center; margin: 0; text-wrap: balance; }
+
+/* ---------- Flip card ---------- */
+.flip {
+  perspective: 1000px;
+  background: none; border: 0; padding: 0; width: 100%;
+  cursor: pointer; text-align: left;
+}
+.flip-inner {
+  display: grid;
+  transition: transform 0.55s cubic-bezier(.2,.7,.2,1);
+  transform-style: preserve-3d;
+}
+.flip.flipped .flip-inner { transform: rotateY(180deg); }
+.face {
+  grid-area: 1 / 1;
+  min-height: 280px;
+  background: var(--card); border: 1px solid var(--line); border-radius: var(--r);
+  padding: 22px 18px;
+  backface-visibility: hidden; -webkit-backface-visibility: hidden;
+  display: flex; flex-direction: column; justify-content: center; gap: 8px;
+  min-width: 0;
+}
+.face.back { transform: rotateY(180deg); }
+.face.front { align-items: center; text-align: center; }
+.face.front .word { text-align: center; }
+.face .tap { margin-top: auto; padding-top: 12px; font-size: 0.75rem; color: var(--muted); }
+.face .ex { margin-top: 6px; }
+.clue { font-family: var(--display); font-size: 1.3rem; line-height: 1.35; margin: 0; text-wrap: balance; }
+
+.actions { display: flex; gap: 10px; }
+.actions button {
+  flex: 1; font-family: var(--body); font-size: 0.95rem; font-weight: 600;
+  padding: 13px; border-radius: var(--r); cursor: pointer;
+  border: 1.5px solid var(--line); background: var(--card); color: var(--fg);
+}
+.actions button.primary { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+
+.message { text-align: center; padding: 40px 18px; }
+.message .def { margin: 0; }
+
+@media (prefers-reduced-motion: reduce) {
+  .flip-inner { transition: none; }
+}
