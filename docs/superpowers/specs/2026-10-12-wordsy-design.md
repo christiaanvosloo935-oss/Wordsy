@@ -1,7 +1,7 @@
 # Wordsy — Design Spec
 
 Date: 2026-10-12
-Status: Draft, awaiting review
+Status: Approved 2026-10-12
 
 ## 1. Purpose
 
@@ -79,6 +79,19 @@ now and against the current day.
 The grade is stored with the word (timestamp, direction, result). In v1 it only
 affects the "Didn't know" follow-up text, not scheduling.
 
+### Quiz a past day
+
+Each day in the archive has a **Quiz this day** button. It opens a practice
+session that uses only that day's words, with the same flip cards, the same
+selection rule (fewest quizzed in this session; ties go to the word that appears
+last in the day) and the same direction alternation, plus an "Another one"
+button. A **Done** button returns to the archive.
+
+Practice sessions run outside the daily flow. They never count as a visit, never
+reveal a new word, and never change today's quiz pool or counts. Grades from
+practice are still recorded in `grades`. Session state is held in memory only
+and isn't saved.
+
 ### Relearn
 
 In the archive, **Relearn** adds a word to *today's* quiz pool. Pressing it again
@@ -94,7 +107,8 @@ The approved mockup is in `docs/mockups/layouts.html`.
 2. **Recall (word → meaning)**: flip card plus grade buttons.
 3. **Recall (meaning → word)**: flip card plus grade buttons.
 4. **Archive**: collapsible days, newest first (`Day 13 · Sun 11 Oct · 3 words`),
-   each word with a one-line definition and a Relearn button. Search filters by
+   each word with a one-line definition and a Relearn button. Each open day
+   also has a **Quiz this day** button. Search filters by
    headword or definition text. Tapping a word opens its full card.
 
 A bottom bar switches between **Today** and **Archive**.
@@ -221,5 +235,6 @@ has any words) and a fresh `today` is created.
   versus 60 or more; visits 1–4+ outputs; midnight rollover moves the day into
   history; quiz selection and tie-breaking; direction alternation; relearn
   add/remove and reset the next day; low-stock threshold; running out of words;
-  a clock that goes backwards.
+  a clock that goes backwards; past-day practice selection and the fact that it
+  never touches `today`.
 - Manual check in Chromium at phone width, in both themes, before publishing.
