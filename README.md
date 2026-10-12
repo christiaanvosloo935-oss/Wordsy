@@ -16,6 +16,9 @@ day-by-day archive.
 - **Archive:** every word, grouped by day. Search it, tap a word to see its
   full card, press **Relearn** to add a past word to today's quizzes, or press
   **Quiz this day** to practise a whole past day.
+- **Share as picture:** on a new word or any archived word, makes a picture of
+  the word card and opens your phone's share sheet. On a computer it downloads
+  the picture instead.
 - The theme follows your phone's light/dark setting.
 
 Progress is saved on the device in the browser's local storage, and nothing
@@ -71,6 +74,7 @@ js/engine.js          All the rules: days, visits, quizzes, archive, practice (p
 js/store.js           Saving and loading state
 js/app.js             Rendering and browser events
 js/fit.js             Shrinks long headwords to fit
+js/card.js            Draws the share picture (layout helpers are tested)
 data/words.js         The word list
 sw.js                 Offline cache
 docs/                 Design spec, plan and mockups

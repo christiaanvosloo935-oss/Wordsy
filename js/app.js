@@ -6,6 +6,7 @@ import {
 } from './engine.js';
 import { load, save } from './store.js';
 import { fitText } from './fit.js';
+import { splitHighlight, renderCardBlob, cardFileName } from './card.js';
 import { WORDS } from '../data/words.js';
 
 const byId = new Map(WORDS.map((w) => [w.id, w]));
@@ -32,9 +33,9 @@ function esc(s) {
 
 // Wraps the word (or its inflection) inside an example sentence in <em>.
 function highlight(example, word) {
-  const stem = word.toLowerCase().slice(0, Math.max(4, word.length - 2)).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  const re = new RegExp(`(${stem}[\\p{L}-]*)`, 'iu');
-  return esc(example).replace(re, '<em>$1</em>');
+  return splitHighlight(example, word)
+    .map((r) => (r.hl ? `<em>${esc(r.text)}</em>` : esc(r.text)))
+    .join('');
 }
 
 const cap = (s) => s.charAt(0).toUpperCase() + s.slice(1);
@@ -69,7 +70,50 @@ function wordCard(w, kicker, note) {
       <p class="kicker">In use</p>
       <ul class="ex">${w.examples.map((e) => `<li>${highlight(e, w.word)}</li>`).join('')}</ul>
     </div>
+    <div class="actions">
+      <button type="button" data-action="share" data-id="${esc(w.id)}">Share as picture</button>
+    </div>
     ${note ? `<p class="note">${esc(note)}</p>` : ''}`;
+}
+
+// Shares a picture of the word card: the share sheet where files can be shared,
+// otherwise the picture is downloaded.
+async function shareWord(id, button) {
+  const w = byId.get(id);
+  if (!w || button.disabled) return;
+  const label = button.textContent;
+  button.disabled = true;
+  button.textContent = 'Preparing…';
+  try {
+    const blob = await renderCardBlob(w);
+    const name = cardFileName(w.word);
+    const file = new File([blob], name, { type: 'image/png' });
+    if (navigator.canShare?.({ files: [file] })) {
+      try {
+        await navigator.share({ files: [file], title: cap(w.word) });
+      } catch (err) {
+        if (err.name !== 'AbortError') throw err;   // the user closing the sheet is not an error
+      }
+      button.textContent = label;
+    } else {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = name;
+      document.body.append(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 10000);
+      button.textContent = 'Picture saved';
+      setTimeout(() => { button.textContent = label; }, 2500);
+    }
+  } catch (err) {
+    console.error('Wordsy: could not share picture', err);
+    button.textContent = "Couldn't make the picture";
+    setTimeout(() => { button.textContent = label; }, 2500);
+  } finally {
+    button.disabled = false;
+  }
 }
 
 // A flip card for either quiz direction. `ns` prefixes the data-action names
@@ -251,6 +295,7 @@ document.addEventListener('click', (e) => {
     case 'relearn': commit(toggleRelearn(state, el.dataset.id)); break;
     case 'open-word': sheetWordId = el.dataset.id; render(); break;
     case 'close-word': sheetWordId = null; render(); break;
+    case 'share': shareWord(el.dataset.id, el); break;
     case 'practice': {
       const day = archiveDays(state).find((d) => d.date === el.dataset.date);
       if (day) { practice = { session: startPractice(day.wordIds), dayNumber: day.dayNumber }; render(); window.scrollTo(0, 0); }
