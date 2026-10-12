@@ -1,5 +1,9 @@
 // Wires the browser to the engine: lifecycle events in, rendered DOM out.
-import { onForeground, onHidden, flipQuiz, gradeQuiz, advance, stock, WORDS_PER_DAY } from './engine.js';
+import {
+  onForeground, onHidden, flipQuiz, gradeQuiz, advance, stock, WORDS_PER_DAY,
+  archiveDays, searchArchive, toggleRelearn, isRelearn,
+  startPractice, practiceFlip, practiceGrade, practiceNext,
+} from './engine.js';
 import { load, save } from './store.js';
 import { fitText } from './fit.js';
 import { WORDS } from '../data/words.js';
@@ -12,6 +16,13 @@ const clockOffset = nowParam && !Number.isNaN(Date.parse(nowParam)) ? Date.parse
 const now = () => Date.now() + clockOffset;
 
 let { state, persistent } = load();
+
+// UI-only state; none of this is saved.
+let view = 'today';
+try { if (sessionStorage.getItem('wordsy:view') === 'archive') view = 'archive'; } catch { /* ignore */ }
+let practice = null;          // { session, dayNumber } while quizzing a past day
+let openDays = null;          // Set of dates whose <details> is open; null = default (newest open)
+let sheetWordId = null;       // word shown in the overlay
 
 const $ = (id) => document.getElementById(id);
 
@@ -122,9 +133,83 @@ function renderToday() {
   $('view-today').innerHTML = html;
 }
 
+function dateFromKey(key) {
+  const [y, m, d] = key.split('-').map(Number);
+  return new Date(y, m - 1, d).getTime();
+}
+
+function renderArchive() {
+  const body = $('archive-body');
+  if (practice) {
+    const { session, dayNumber } = practice;
+    body.innerHTML = `
+      <div class="practice-head">
+        <p class="kicker">Quizzing Day ${dayNumber}</p>
+        <button type="button" class="link" data-action="practice-done">Done</button>
+      </div>
+      ${quizCard(session.current, 'practice')}
+      ${gradeRow(session.current, 'practice', 'Another one')}`;
+    $('search').hidden = true;
+    return;
+  }
+  $('search').hidden = false;
+  const all = archiveDays(state);
+  const days = searchArchive(all, WORDS, $('search').value);
+  if (all.length === 0) {
+    body.innerHTML = '<p class="empty-note">Your words will appear here, grouped by day.</p>';
+    return;
+  }
+  if (days.length === 0) {
+    body.innerHTML = '<p class="empty-note">No words match your search.</p>';
+    return;
+  }
+  const searching = $('search').value.trim() !== '';
+  const todayKey = state.today?.date;
+  body.innerHTML = days.map((d, i) => {
+    const open = searching || (openDays ? openDays.has(d.date) : i === 0);
+    const count = d.wordIds.length;
+    const rows = d.wordIds.map((id) => {
+      const w = byId.get(id);
+      if (!w) return '';
+      const relearn = d.date === todayKey
+        ? '<span class="tag">Today</span>'
+        : `<button type="button" class="relearn" data-action="relearn" data-id="${esc(id)}" aria-pressed="${isRelearn(state, id)}">${isRelearn(state, id) ? 'Added' : 'Relearn'}</button>`;
+      return `<li>
+        <button type="button" class="row" data-action="open-word" data-id="${esc(id)}">
+          <strong>${esc(cap(w.word))}</strong><small>${esc(w.definition)}</small>
+        </button>${relearn}</li>`;
+    }).join('');
+    return `<details class="day" data-date="${esc(d.date)}"${open ? ' open' : ''}>
+      <summary><b>Day ${d.dayNumber}</b><span>${esc(shortDate(dateFromKey(d.date)))} · ${count} word${count === 1 ? '' : 's'}</span></summary>
+      <ul>${rows}</ul>
+      <div class="day-actions"><button type="button" data-action="practice" data-date="${esc(d.date)}">Quiz this day</button></div>
+    </details>`;
+  }).join('');
+}
+
+function renderSheet() {
+  const w = sheetWordId && byId.get(sheetWordId);
+  $('overlay').hidden = !w;
+  if (w) $('sheet-body').innerHTML = wordCard(w, 'From your archive', '');
+}
+
 function renderChrome() {
   const t = state.today;
-  $('dateline').textContent = `${shortDate(now())} · Day ${t.dayNumber}`;
+  $('view-today').hidden = view !== 'today';
+  $('view-archive').hidden = view !== 'archive';
+  for (const v of ['today', 'archive']) {
+    if (v === view) $(`tab-${v}`).setAttribute('aria-current', 'page');
+    else $(`tab-${v}`).removeAttribute('aria-current');
+  }
+
+  if (view === 'archive') {
+    const total = archiveDays(state).reduce((n, d) => n + d.wordIds.length, 0);
+    $('dateline').textContent = `Archive · ${total} word${total === 1 ? '' : 's'}`;
+    $('dots').hidden = true;
+  } else {
+    $('dateline').textContent = `${shortDate(now())} · Day ${t.dayNumber}`;
+    $('dots').hidden = false;
+  }
   const shown = t.newWordIds.length;
   $('dots').innerHTML = Array.from({ length: WORDS_PER_DAY }, (_, i) => `<i class="${i < shown ? 'on' : ''}"></i>`).join('');
   $('dots').setAttribute('aria-label', `${shown} of ${WORDS_PER_DAY} words today`);
@@ -143,7 +228,16 @@ function fitAll() {
 function render() {
   renderChrome();
   renderToday();
+  renderArchive();
+  renderSheet();
   fitAll();
+}
+
+function setView(v) {
+  view = v;
+  try { sessionStorage.setItem('wordsy:view', v); } catch { /* ignore */ }
+  render();
+  window.scrollTo(0, 0);
 }
 
 // ---------- Events ----------
@@ -155,12 +249,59 @@ document.addEventListener('click', (e) => {
     case 'today-flip': if (!state.today.screen.flipped) commit(flipQuiz(state)); break;
     case 'today-grade': commit(gradeQuiz(state, el.dataset.knew === '1', now())); break;
     case 'today-next': commit(advance(state, WORDS)); break;
+    case 'view': setView(el.dataset.view); break;
+    case 'relearn': commit(toggleRelearn(state, el.dataset.id)); break;
+    case 'open-word': sheetWordId = el.dataset.id; render(); break;
+    case 'close-word': sheetWordId = null; render(); break;
+    case 'practice': {
+      const day = archiveDays(state).find((d) => d.date === el.dataset.date);
+      if (day) { practice = { session: startPractice(day.wordIds), dayNumber: day.dayNumber }; render(); window.scrollTo(0, 0); }
+      break;
+    }
+    case 'practice-flip':
+      if (!practice.session.current.flipped) { practice = { ...practice, session: practiceFlip(practice.session) }; render(); }
+      break;
+    case 'practice-grade': {
+      const out = practiceGrade(practice.session, state, el.dataset.knew === '1', now());
+      practice = { ...practice, session: out.session };
+      commit(out.state);
+      break;
+    }
+    case 'practice-next': practice = { ...practice, session: practiceNext(practice.session) }; render(); break;
+    case 'practice-done': practice = null; render(); break;
     default: break;
   }
 });
 
+// Clicking the dim backdrop closes the word sheet.
+$('overlay').addEventListener('click', (e) => { if (e.target === e.currentTarget) { sheetWordId = null; render(); } });
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && sheetWordId) { sheetWordId = null; render(); } });
+
+$('search').addEventListener('input', renderArchive);
+
+// Remember which days the user opened or closed (toggle doesn't bubble, so capture it).
+document.addEventListener('toggle', (e) => {
+  const d = e.target;
+  if (!(d instanceof HTMLDetailsElement) || !d.dataset.date || $('search').value.trim()) return;
+  if (!openDays) openDays = new Set([...document.querySelectorAll('details.day[open]')].map((x) => x.dataset.date));
+  if (d.open) openDays.add(d.dataset.date); else openDays.delete(d.dataset.date);
+}, true);
+
+// A new visit always lands on Today so a new word or quiz isn't missed.
+function foreground() {
+  const before = state.today;
+  const next = onForeground(state, WORDS, now());
+  if (next.today !== before && (next.today.date !== before?.date || next.today.visits !== before?.visits)) {
+    view = 'today';
+    practice = null;
+    sheetWordId = null;
+    try { sessionStorage.setItem('wordsy:view', 'today'); } catch { /* ignore */ }
+  }
+  commit(next);
+}
+
 document.addEventListener('visibilitychange', () => {
-  if (document.visibilityState === 'visible') commit(onForeground(state, WORDS, now()));
+  if (document.visibilityState === 'visible') foreground();
   else { state = onHidden(state, now()); save(state); }
 });
 window.addEventListener('pagehide', () => { state = onHidden(state, now()); save(state); });
@@ -173,4 +314,8 @@ setInterval(() => {
 window.addEventListener('resize', fitAll);
 if (document.fonts?.ready) document.fonts.ready.then(fitAll);
 
-commit(onForeground(state, WORDS, now()));
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js').catch(() => { /* offline support is optional */ });
+}
+
+foreground();
