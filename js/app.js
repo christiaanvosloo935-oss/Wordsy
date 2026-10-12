@@ -80,6 +80,26 @@ function wordCard(w, kicker, note) {
 
 // Shares a picture of the word card: the share sheet where files can be shared,
 // otherwise the picture is downloaded.
+// Pictures are made ahead of the tap: some phones only open the share sheet if it is
+// requested very soon after the tap, and drawing the picture can take a moment.
+const cardCache = new Map();
+function prepareCard(id) {
+  const key = `${id}|${getComputedStyle(document.documentElement).getPropertyValue('--bg')}`;
+  if (!cardCache.has(key)) {
+    if (cardCache.size >= 6) cardCache.delete(cardCache.keys().next().value);
+    const p = renderCardBlob(byId.get(id));
+    p.catch(() => cardCache.delete(key));
+    cardCache.set(key, p);
+  }
+  return cardCache.get(key);
+}
+
+function warmShare() {
+  document.querySelectorAll('.share-btn').forEach((btn) => {
+    setTimeout(() => prepareCard(btn.dataset.id).catch(() => {}), 250);
+  });
+}
+
 let toastTimer = null;
 function flash(message) {
   const el = $('toast');
@@ -95,7 +115,7 @@ async function shareWord(id, button) {
   button.disabled = true;
   button.setAttribute('aria-busy', 'true');
   try {
-    const blob = await renderCardBlob(w);
+    const blob = await prepareCard(id);
     const name = cardFileName(w.word);
     const file = new File([blob], name, { type: 'image/png' });
     if (navigator.canShare?.({ files: [file] })) {
@@ -117,7 +137,8 @@ async function shareWord(id, button) {
     }
   } catch (err) {
     console.error('Wordsy: could not share picture', err);
-    flash("Couldn't make the picture");
+    // The phone refused because the tap was too long ago; the picture is ready now, so a second tap works.
+    flash(err.name === 'NotAllowedError' ? 'Tap the share icon once more' : "Couldn't make the picture");
   } finally {
     button.disabled = false;
     button.removeAttribute('aria-busy');
@@ -281,6 +302,7 @@ function render() {
   renderArchive();
   renderSheet();
   fitAll();
+  warmShare();
 }
 
 function setView(v) {
@@ -372,7 +394,15 @@ setInterval(() => {
 window.addEventListener('resize', fitAll);
 if (document.fonts?.ready) document.fonts.ready.then(fitAll);
 
+document.addEventListener('pointerdown', (e) => {
+  const btn = e.target.closest?.('.share-btn');
+  if (btn) prepareCard(btn.dataset.id).catch(() => {});
+});
+
 if ('serviceWorker' in navigator) {
+  // When an update takes over, reload once so the new files are used straight away.
+  const hadController = !!navigator.serviceWorker.controller;
+  navigator.serviceWorker.addEventListener('controllerchange', () => { if (hadController) location.reload(); });
   navigator.serviceWorker.register('sw.js').catch(() => { /* offline support is optional */ });
 }
 

@@ -1,6 +1,6 @@
 // Offline cache for Wordsy. Bump CACHE whenever any listed file changes
 // (for example after adding words), so phones pick up the new version.
-const CACHE = 'wordsy-v3';
+const CACHE = 'wordsy-v4';
 const FILES = [
   './',
   './index.html',
@@ -27,7 +27,10 @@ const FILES = [
 ];
 
 self.addEventListener('install', (event) => {
-  event.waitUntil(caches.open(CACHE).then((c) => c.addAll(FILES)).then(() => self.skipWaiting()));
+  // cache: 'reload' skips the browser's HTTP cache. GitHub Pages lets browsers keep files for
+  // 10 minutes, so without it an update can precache the previous version's files.
+  const fresh = FILES.map((u) => new Request(u, { cache: 'reload' }));
+  event.waitUntil(caches.open(CACHE).then((c) => c.addAll(fresh)).then(() => self.skipWaiting()));
 });
 
 self.addEventListener('activate', (event) => {
