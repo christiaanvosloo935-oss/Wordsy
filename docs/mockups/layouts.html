@@ -1,0 +1,348 @@
+<title>Wordsy Layouts</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=Figtree:wght@400;500;600&family=IBM+Plex+Mono:wght@400&family=IBM+Plex+Sans:wght@400;500;600&family=Instrument+Serif:ital@0;1&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,600;1,6..72,400&display=swap">
+<style>
+/* Layout: a review sheet. Short intro, a style switcher, then four phone screens side by side wearing the chosen skin. */
+:root {
+  --bg: #f5f6f8;
+  --fg: #1b1e25;
+  --muted: #5d6370;
+  --line: #dcdfe5;
+  --chip: #ffffff;
+  --accent: #3b4fd8;
+  --ui: 'Figtree', system-ui, -apple-system, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #15171c; --fg: #e8eaf0; --muted: #9ba1ae; --line: #2c3039; --chip: #1f222a; --accent: #8c9bff; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #15171c; --fg: #e8eaf0; --muted: #9ba1ae; --line: #2c3039; --chip: #1f222a; --accent: #8c9bff; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font-family: var(--ui); font-size: 15px; line-height: 1.5; }
+.wrap { max-width: 1320px; margin: 0 auto; padding: 32px 20px 64px; }
+header h1 { font-size: 1.9rem; line-height: 1.15; margin: 0 0 8px; text-wrap: balance; letter-spacing: -0.01em; }
+header p { margin: 0; color: var(--muted); max-width: 66ch; }
+
+.flow { display: flex; flex-wrap: wrap; gap: 8px; margin: 20px 0 0; padding: 0; list-style: none; }
+.flow li { background: var(--chip); border: 1px solid var(--line); border-radius: 999px; padding: 6px 12px; font-size: 0.85rem; color: var(--muted); }
+.flow b { color: var(--fg); font-weight: 600; }
+
+.switch { display: flex; flex-wrap: wrap; gap: 10px; margin: 28px 0 8px; }
+.switch button {
+  font: inherit; cursor: pointer; text-align: left; min-width: 0; flex: 1 1 220px;
+  background: var(--chip); color: var(--fg); border: 1.5px solid var(--line); border-radius: 12px; padding: 12px 14px;
+}
+.switch button span { display: block; color: var(--muted); font-size: 0.85rem; }
+.switch button[aria-pressed="true"] { border-color: var(--accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 20%, transparent); }
+.switch button:focus-visible, .stage button:focus-visible, .stage summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.hint { color: var(--muted); font-size: 0.85rem; margin: 0 0 20px; }
+
+.screens { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 28px 20px; }
+.screen-label { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin: 0 0 8px; font-weight: 600; }
+
+/* ---------- Phone frame + skins (each skin is a fixed look, independent of page theme) ---------- */
+.phone {
+  width: 100%; max-width: 320px; height: 620px; border-radius: 36px; overflow: hidden; position: relative;
+  border: 8px solid #0d0f13; background: var(--s-bg); color: var(--s-fg); font-family: var(--s-body);
+  display: flex; flex-direction: column;
+}
+.skin-a { --s-bg:#fbfbf9; --s-fg:#17191e; --s-muted:#6b6f78; --s-accent:#2443a8; --s-card:#ffffff; --s-line:#e2e1dc; --s-soft:#eef1fb;
+  --s-display:'Newsreader', Georgia, serif; --s-body:'IBM Plex Sans', system-ui, sans-serif; --s-r:6px; --s-word-size:2.5rem; --s-word-weight:600; --s-word-style:normal; }
+.skin-b { --s-bg:#0f5c55; --s-fg:#132826; --s-muted:#5c6f6c; --s-accent:#f2783a; --s-card:#ffffff; --s-line:#dde7e5; --s-soft:#fff1e8;
+  --s-display:'Bricolage Grotesque', system-ui, sans-serif; --s-body:'Bricolage Grotesque', system-ui, sans-serif; --s-r:22px; --s-word-size:2.3rem; --s-word-weight:800; --s-word-style:normal; }
+.skin-c { --s-bg:#131726; --s-fg:#ebe8f6; --s-muted:#9ca2bb; --s-accent:#c4b3ff; --s-card:#1c2134; --s-line:#2b3150; --s-soft:#262c45;
+  --s-display:'Newsreader', Georgia, serif; --s-body:'IBM Plex Sans', system-ui, sans-serif; --s-r:6px; --s-word-size:2.5rem; --s-word-weight:600; --s-word-style:normal; }
+
+.p-top { display: flex; justify-content: space-between; align-items: center; padding: 18px 20px 8px; font-size: 0.78rem; color: var(--s-muted); }
+.skin-b .p-top { color: #cfe6e2; }
+.dots { display: flex; gap: 5px; }
+.dots i { width: 8px; height: 8px; border-radius: 50%; background: var(--s-line); display: block; }
+.dots i.on { background: var(--s-accent); }
+.skin-b .dots i { background: #2f7b74; } .skin-b .dots i.on { background: var(--s-accent); }
+
+.p-body { flex: 1; overflow-y: auto; padding: 6px 16px 16px; display: flex; flex-direction: column; gap: 12px; min-height: 0; }
+.p-nav { display: flex; border-top: 1px solid var(--s-line); background: var(--s-card); }
+.skin-b .p-nav { border-top: 0; }
+.p-nav span { flex: 1; text-align: center; padding: 12px 0 16px; font-size: 0.78rem; color: var(--s-muted); font-family: var(--s-body); }
+.p-nav span.on { color: var(--s-accent); font-weight: 600; }
+.skin-b .p-nav span.on { color: #0f5c55; }
+
+.card { background: var(--s-card); border-radius: var(--s-r); padding: 18px; }
+.skin-a .card { border: 1px solid var(--s-line); }
+.skin-a .card.plain { border: 0; background: transparent; padding: 6px 4px; }
+.skin-c .card { border: 1px solid var(--s-line); }
+.skin-c .card.plain { border: 0; background: transparent; padding: 6px 4px; }
+
+.kicker { font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--s-muted); margin: 0 0 6px; font-family: var(--s-body); font-weight: 600; }
+.skin-b .kicker.on-bg { color: #cfe6e2; }
+.word { display: block; width: 100%; white-space: nowrap; overflow: hidden; font-family: var(--s-display); font-size: var(--s-word-size); font-weight: var(--s-word-weight); font-style: var(--s-word-style); line-height: 1.05; margin: 0; letter-spacing: -0.01em; }
+.skin-b .word.on-bg { color: #ffffff; }
+.pron { font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 0.8rem; color: var(--s-muted); margin: 6px 0 0; }
+.skin-b .pron.on-bg { color: #cfe6e2; }
+.pos { font-style: italic; font-family: var(--s-display); color: var(--s-accent); }
+.skin-b .pos { font-style: normal; font-weight: 600; font-size: 0.8rem; background: var(--s-accent); color: #fff; padding: 1px 8px; border-radius: 999px; }
+.def { font-family: var(--s-display); font-size: 1.12rem; line-height: 1.4; margin: 8px 0 0; }
+.skin-b .def { font-family: var(--s-body); font-size: 1rem; font-weight: 600; }
+
+.ex { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; font-size: 0.88rem; line-height: 1.45; }
+.ex li { padding-left: 12px; border-left: 2px solid var(--s-line); }
+.skin-b .ex li { border-left: 0; padding: 10px 12px; background: var(--s-soft); border-radius: 12px; }
+.ex em { font-style: normal; font-weight: 600; color: var(--s-accent); }
+.skin-b .ex em { color: #c4521a; }
+.ex li.locked { color: var(--s-muted); font-style: italic; }
+.note { font-size: 0.8rem; color: var(--s-muted); text-align: center; margin: 0; }
+.skin-b .note { color: #cfe6e2; }
+
+/* Flip card */
+.flip { perspective: 1000px; background: none; width: 100%; cursor: pointer; font: inherit; color: inherit; text-align: left; }
+.flip-inner { position: relative; height: 290px; transition: transform 0.55s cubic-bezier(.2,.7,.2,1); transform-style: preserve-3d; }
+.flip.flipped .flip-inner { transform: rotateY(180deg); }
+.face { position: absolute; inset: 0; padding: 20px 18px; backface-visibility: hidden; -webkit-backface-visibility: hidden; display: flex; flex-direction: column; justify-content: center; gap: 8px; }
+.face.back { transform: rotateY(180deg); }
+.face .tap { margin-top: auto; font-size: 0.75rem; color: var(--s-muted); text-align: center; font-family: var(--s-body); }
+.face.front { text-align: center; align-items: center; }
+.face.front .word { text-align: center; }
+.clue { font-family: var(--s-display); font-size: 1.25rem; line-height: 1.35; margin: 0; text-align: center; }
+.skin-b .clue { font-family: var(--s-body); font-size: 1.08rem; font-weight: 500; }
+.face .tap:first-child { margin-top: 0; }
+.flip.card { padding: 0; }
+
+.grade { display: flex; gap: 10px; }
+.grade button { flex: 1; font: inherit; font-family: var(--s-body); font-size: 0.9rem; font-weight: 600; padding: 12px; border-radius: var(--s-r); cursor: pointer; border: 1.5px solid var(--s-line); background: var(--s-card); color: var(--s-fg); }
+.grade button.yes { background: var(--s-accent); border-color: var(--s-accent); color: #fff; }
+.skin-c .grade button.yes { color: #131726; }
+.grade[hidden] { display: none !important; }
+.grade-done { font-size: 0.85rem; text-align: center; color: var(--s-muted); margin: 0; }
+.skin-b .grade-done { color: #cfe6e2; }
+
+/* Archive */
+.arch { display: flex; flex-direction: column; gap: 10px; }
+.day { background: var(--s-card); border-radius: var(--s-r); }
+.skin-a .day, .skin-c .day { border: 1px solid var(--s-line); }
+.day summary { list-style: none; cursor: pointer; display: flex; justify-content: space-between; align-items: baseline; padding: 12px 14px; font-family: var(--s-body); }
+.day summary::-webkit-details-marker { display: none; }
+.day summary b { font-family: var(--s-display); font-size: 1.05rem; font-weight: 600; }
+.day summary span { font-size: 0.75rem; color: var(--s-muted); }
+.day ul { list-style: none; margin: 0; padding: 0 14px 10px; }
+.day li { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 8px 0; border-top: 1px solid var(--s-line); font-size: 0.85rem; }
+.day li div { min-width: 0; }
+.day li strong { display: block; font-family: var(--s-display); font-size: 1rem; }
+.day li small { color: var(--s-muted); display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.relearn { flex: none; font: inherit; font-family: var(--s-body); font-size: 0.72rem; font-weight: 600; padding: 5px 10px; border-radius: 999px; border: 1px solid var(--s-accent); color: var(--s-accent); background: transparent; cursor: pointer; }
+.skin-b .relearn { color: #c4521a; border-color: #f2783a; }
+.relearn.added { background: var(--s-accent); color: #fff; }
+.skin-c .relearn.added { color: #131726; }
+.search { font-family: var(--s-body); font-size: 0.85rem; padding: 10px 12px; border-radius: var(--s-r); background: var(--s-card); border: 1px solid var(--s-line); color: var(--s-muted); }
+.skin-b .search { border: 0; }
+
+.notes { margin-top: 36px; display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; }
+.notes div { min-width: 0; }
+.notes h2 { font-size: 1rem; margin: 0 0 4px; }
+.notes p { margin: 0; color: var(--muted); font-size: 0.9rem; }
+@media (prefers-reduced-motion: reduce) { .flip-inner { transition: none; } }
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>Wordsy layout options</h1>
+    <p>Four screens in a day and a night version. Both use the same typefaces; only the colours change. Switch between them below. The flip cards work: tap one to reveal the answer, then grade yourself. In the archive, tap a day to open it and press Relearn on any word.</p>
+    <ul class="flow" aria-label="How a day works">
+      <li><b>Open 1</b> · new word</li>
+      <li><b>Open 2</b> · quiz, then word 2</li>
+      <li><b>Open 3</b> · quiz, then word 3</li>
+      <li><b>Open 4+</b> · quizzes on today's words only</li>
+    </ul>
+  </header>
+
+  <div class="switch" role="group" aria-label="Visual style">
+    <button type="button" id="sk-a" data-skin="skin-a" aria-pressed="true">Day · Lexicon<span>Dictionary page: serif headword, quiet and bookish</span></button>
+    <button type="button" id="sk-c" data-skin="skin-c" aria-pressed="false">Night · Lexicon after dark<span>Night study colours with Lexicon's typefaces</span></button>
+  </div>
+  <p class="hint">The words and dates are examples.</p>
+
+  <div class="screens stage" id="stage">
+    <!-- 1. New word -->
+    <section>
+      <p class="screen-label">1 · Today's new word</p>
+      <div class="phone skin-a">
+        <div class="p-top"><span>Mon 12 Oct · Day 14</span><span class="dots" aria-label="Word 2 of 3"><i class="on"></i><i class="on"></i><i></i></span></div>
+        <div class="p-body">
+          <div class="card plain">
+            <p class="kicker on-bg">Word 2 of 3 today</p>
+            <h2 class="word on-bg">Apricity</h2>
+            <p class="pron on-bg">/əˈprɪs.ɪ.ti/</p>
+          </div>
+          <div class="card">
+            <span class="pos">noun</span>
+            <p class="def">The warmth of the sun on a cold winter's day.</p>
+          </div>
+          <div class="card">
+            <p class="kicker">In use</p>
+            <ul class="ex">
+              <li>We ate lunch on the steps, soaking up the <em>apricity</em> of a January afternoon.</li>
+              <li>There's a brief <em>apricity</em> around noon, then the cold comes straight back.</li>
+              <li>"I'm not lazy, I'm appreciating the <em>apricity</em>," she said from the deck chair.</li>
+            </ul>
+          </div>
+          <p class="note">Word 3 unlocks the next time you open Wordsy.</p>
+        </div>
+        <nav class="p-nav"><span class="on">Today</span><span>Archive</span></nav>
+      </div>
+    </section>
+
+    <!-- 2. Quiz: word -> meaning -->
+    <section>
+      <p class="screen-label">2 · Recall: word → meaning</p>
+      <div class="phone skin-a">
+        <div class="p-top"><span>Quick recall</span><span class="dots"><i class="on"></i><i class="on"></i><i></i></span></div>
+        <div class="p-body">
+          <button type="button" class="flip card" id="flip-1" aria-label="Flip card">
+            <div class="flip-inner">
+              <div class="face front">
+                <p class="kicker">What does it mean?</p>
+                <p class="word">Lagniappe</p>
+                <p class="pron">/ˈlæn.jæp/</p>
+                <p class="tap">Tap to reveal</p>
+              </div>
+              <div class="face back">
+                <p class="kicker">Lagniappe · <span class="pos">noun</span></p>
+                <p class="def">A small extra gift given to a customer with a purchase; a bonus.</p>
+                <ul class="ex"><li>The baker threw in a cookie as <em>lagniappe</em>.</li></ul>
+              </div>
+            </div>
+          </button>
+          <div class="grade" hidden><button type="button" class="no">Didn't know</button><button type="button" class="yes">Knew it</button></div>
+          <p class="grade-done" hidden></p>
+          <p class="note">Then: your next new word →</p>
+        </div>
+        <nav class="p-nav"><span class="on">Today</span><span>Archive</span></nav>
+      </div>
+    </section>
+
+    <!-- 3. Quiz: meaning -> word -->
+    <section>
+      <p class="screen-label">3 · Recall: meaning → word</p>
+      <div class="phone skin-a">
+        <div class="p-top"><span>Quick recall</span><span class="dots"><i class="on"></i><i class="on"></i><i class="on"></i></span></div>
+        <div class="p-body">
+          <button type="button" class="flip card" id="flip-2" aria-label="Flip card">
+            <div class="flip-inner">
+              <div class="face front">
+                <p class="kicker">Which word means…</p>
+                <p class="clue">Someone who gives opinions on things they know nothing about.</p>
+                <p class="tap">Tap to reveal</p>
+              </div>
+              <div class="face back">
+                <p class="kicker">The word is</p>
+                <p class="word">Ultracrepidarian</p>
+                <p class="pron">/ˌʌl.trə.krɛp.ɪˈdɛə.ri.ən/</p>
+                <ul class="ex"><li>My uncle turns <em>ultracrepidarian</em> the moment economics comes up.</li></ul>
+              </div>
+            </div>
+          </button>
+          <div class="grade" hidden><button type="button" class="no">Didn't know</button><button type="button" class="yes">Knew it</button></div>
+          <p class="grade-done" hidden></p>
+          <p class="note">All 3 words done today. Keep reviewing or come back tomorrow.</p>
+        </div>
+        <nav class="p-nav"><span class="on">Today</span><span>Archive</span></nav>
+      </div>
+    </section>
+
+    <!-- 4. Archive -->
+    <section>
+      <p class="screen-label">4 · Archive by day</p>
+      <div class="phone skin-a">
+        <div class="p-top"><span>Archive · 42 words</span><span></span></div>
+        <div class="p-body">
+          <div class="search">Search words…</div>
+          <div class="arch">
+            <details class="day" open>
+              <summary><b>Day 13</b><span>Sun 11 Oct · 3 words</span></summary>
+              <ul>
+                <li><div><strong>Sonder</strong><small>Realising every passer-by has a life as vivid as yours</small></div><button type="button" class="relearn">Relearn</button></li>
+                <li><div><strong>Kerfuffle</strong><small>A commotion or fuss over a minor matter</small></div><button type="button" class="relearn">Relearn</button></li>
+                <li><div><strong>Petrichor</strong><small>The earthy smell after rain on dry ground</small></div><button type="button" class="relearn">Relearn</button></li>
+              </ul>
+            </details>
+            <details class="day">
+              <summary><b>Day 12</b><span>Sat 10 Oct · 3 words</span></summary>
+              <ul>
+                <li><div><strong>Defenestrate</strong><small>To throw someone out of a window</small></div><button type="button" class="relearn">Relearn</button></li>
+                <li><div><strong>Mellifluous</strong><small>Sweet and smooth to hear</small></div><button type="button" class="relearn">Relearn</button></li>
+                <li><div><strong>Sobriquet</strong><small>A nickname</small></div><button type="button" class="relearn">Relearn</button></li>
+              </ul>
+            </details>
+            <details class="day">
+              <summary><b>Day 11</b><span>Fri 9 Oct · 2 words</span></summary>
+              <ul>
+                <li><div><strong>Quixotic</strong><small>Idealistic to an impractical degree</small></div><button type="button" class="relearn">Relearn</button></li>
+                <li><div><strong>Susurrus</strong><small>A soft whispering or rustling sound</small></div><button type="button" class="relearn">Relearn</button></li>
+              </ul>
+            </details>
+          </div>
+        </div>
+        <nav class="p-nav"><span>Today</span><span class="on">Archive</span></nav>
+      </div>
+    </section>
+  </div>
+
+  <div class="notes">
+    <div><h2>Day</h2><p>Lexicon as before: white page, ink-blue accent, Newsreader serif for words and definitions, Plex Sans for labels and buttons.</p></div>
+    <div><h2>Night</h2><p>Night study's deep navy and soft lilac, with exactly the same type, sizes and layout as the day version.</p></div>
+  </div>
+</div>
+
+<script>
+(function () {
+  var phones = document.querySelectorAll('.phone');
+  var btns = document.querySelectorAll('.switch button');
+  function setSkin(skin) {
+    phones.forEach(function (p) { p.classList.remove('skin-a', 'skin-b', 'skin-c'); p.classList.add(skin); });
+    btns.forEach(function (b) { b.setAttribute('aria-pressed', b.dataset.skin === skin ? 'true' : 'false'); });
+    try { localStorage.setItem('wordsy-skin', skin); } catch (e) {}
+  }
+  btns.forEach(function (b) { b.addEventListener('click', function () { setSkin(b.dataset.skin); }); });
+  try { var saved = localStorage.getItem('wordsy-skin'); if (saved === 'skin-a' || saved === 'skin-c') setSkin(saved); } catch (e) {}
+
+  // Shrink any headword that is too wide for its card (e.g. Ultracrepidarian).
+  function fitWords() {
+    document.querySelectorAll('.word').forEach(function (w) {
+      w.style.fontSize = '';
+      var size = parseFloat(getComputedStyle(w).fontSize);
+      while (w.scrollWidth > w.clientWidth && size > 14) { size -= 1; w.style.fontSize = size + 'px'; }
+    });
+  }
+  fitWords();
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(fitWords);
+  window.addEventListener('resize', fitWords);
+  btns.forEach(function (b) { b.addEventListener('click', fitWords); });
+
+  document.querySelectorAll('.flip').forEach(function (card) {
+    var body = card.parentElement;
+    var grade = body.querySelector('.grade');
+    var done = body.querySelector('.grade-done');
+    card.addEventListener('click', function () {
+      var flipped = card.classList.toggle('flipped');
+      grade.hidden = !flipped || !done.hidden;
+    });
+    grade.querySelectorAll('button').forEach(function (g) {
+      g.addEventListener('click', function () {
+        grade.hidden = true;
+        done.hidden = false;
+        done.textContent = g.classList.contains('yes') ? 'Marked as known. Nice.' : "No problem. It'll come up again today.";
+      });
+    });
+  });
+
+  document.querySelectorAll('.relearn').forEach(function (r) {
+    r.addEventListener('click', function () {
+      var added = r.classList.toggle('added');
+      r.textContent = added ? 'Added' : 'Relearn';
+    });
+  });
+})();
+</script>
