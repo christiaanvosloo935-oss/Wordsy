@@ -123,9 +123,11 @@ and quizzes keep working.
 - **Typefaces (both themes):** Newsreader (serif) for headwords, definitions and
   day titles. IBM Plex Sans for labels, buttons and examples. IBM Plex Mono for
   pronunciation. The font files are self-hosted so the app works offline.
-- **Day theme ("Lexicon"):** off-white page, white cards with hairline borders,
-  ink-blue accent.
-- **Night theme:** deep navy page, slightly lighter navy cards, soft lilac accent.
+- **Day theme ("Lexicon"):** warm cream page `#f5eedf`, lighter cream cards
+  `#fcf8ef` with hairline borders `#e4d9c5`, near-black ink text `#1d1b18`,
+  ink-blue accent `#2443a8`.
+- **Night theme:** deep navy page `#151826`, cards `#1e2131`, cream text
+  `#f1e8d6`, soft lilac accent `#c9b8ff`.
 - The theme follows the phone's light/dark setting (`prefers-color-scheme`).
   There's no in-app toggle.
 - **Long headwords:** the font size shrinks until the word fits its card
