@@ -55,9 +55,14 @@ function commit(next) {
 
 // ---------- Today ----------
 
+// The usual "share" glyph: a box with an arrow leaving it.
+const SHARE_ICON = '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 15V3"/><path d="M8 7l4-4 4 4"/><path d="M7 11H6a1 1 0 0 0-1 1v7a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-7a1 1 0 0 0-1-1h-1"/></svg>';
+
 function wordCard(w, kicker, note) {
   return `
-    <div class="card plain">
+    <div class="card plain headline">
+      <button type="button" class="share-btn" data-action="share" data-id="${esc(w.id)}"
+        aria-label="Share a picture of ${esc(w.word)}" title="Share">${SHARE_ICON}</button>
       <p class="kicker">${esc(kicker)}</p>
       <h1 class="word">${esc(cap(w.word))}</h1>
       <p class="pron">${esc(w.ipa)}</p>
@@ -70,20 +75,25 @@ function wordCard(w, kicker, note) {
       <p class="kicker">In use</p>
       <ul class="ex">${w.examples.map((e) => `<li>${highlight(e, w.word)}</li>`).join('')}</ul>
     </div>
-    <div class="actions">
-      <button type="button" data-action="share" data-id="${esc(w.id)}">Share as picture</button>
-    </div>
     ${note ? `<p class="note">${esc(note)}</p>` : ''}`;
 }
 
 // Shares a picture of the word card: the share sheet where files can be shared,
 // otherwise the picture is downloaded.
+let toastTimer = null;
+function flash(message) {
+  const el = $('toast');
+  el.textContent = message;
+  el.hidden = false;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { el.hidden = true; }, 2500);
+}
+
 async function shareWord(id, button) {
   const w = byId.get(id);
   if (!w || button.disabled) return;
-  const label = button.textContent;
   button.disabled = true;
-  button.textContent = 'Preparing…';
+  button.setAttribute('aria-busy', 'true');
   try {
     const blob = await renderCardBlob(w);
     const name = cardFileName(w.word);
@@ -94,7 +104,6 @@ async function shareWord(id, button) {
       } catch (err) {
         if (err.name !== 'AbortError') throw err;   // the user closing the sheet is not an error
       }
-      button.textContent = label;
     } else {
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -104,15 +113,14 @@ async function shareWord(id, button) {
       a.click();
       a.remove();
       setTimeout(() => URL.revokeObjectURL(url), 10000);
-      button.textContent = 'Picture saved';
-      setTimeout(() => { button.textContent = label; }, 2500);
+      flash('Picture saved');
     }
   } catch (err) {
     console.error('Wordsy: could not share picture', err);
-    button.textContent = "Couldn't make the picture";
-    setTimeout(() => { button.textContent = label; }, 2500);
+    flash("Couldn't make the picture");
   } finally {
     button.disabled = false;
+    button.removeAttribute('aria-busy');
   }
 }
 

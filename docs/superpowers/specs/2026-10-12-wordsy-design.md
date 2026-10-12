@@ -98,8 +98,9 @@ and isn't saved.
 
 ### Share as picture
 
-The new-word screen and the archive word pop-up have a **Share as picture**
-button. It draws a 1080×1350 PNG of the word card in the current theme (cream or
+The new-word screen and the archive word pop-up have a small **share icon** (the
+usual box-with-arrow glyph, no label or border) at the top right of the word card.
+It draws a 1080×1350 PNG of the word card in the current theme (cream or
 navy): the headword, pronunciation, part of speech, definition, the first example
 with the word highlighted, and a "Wordsy" footer. It uses the same fonts as the
 app, shrinks the headword to fit, and shrinks the body text if an entry is too
@@ -107,8 +108,9 @@ long. The picture is drawn in the browser (`js/card.js`), with no libraries.
 
 Where the browser can share files (phones), the share sheet opens with the picture
 attached; closing it does nothing. Otherwise the picture downloads as
-`wordsy-<word>.png`. The button shows "Preparing…", then "Picture saved" after a
-download, or "Couldn't make the picture" if something fails.
+`wordsy-<word>.png`. The icon dims while the picture is made. A small notice at the
+bottom says "Picture saved" after a download, or "Couldn't make the picture" if
+something fails.
 
 ### Relearn
 

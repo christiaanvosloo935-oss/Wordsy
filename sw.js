@@ -1,6 +1,6 @@
 // Offline cache for Wordsy. Bump CACHE whenever any listed file changes
 // (for example after adding words), so phones pick up the new version.
-const CACHE = 'wordsy-v2';
+const CACHE = 'wordsy-v3';
 const FILES = [
   './',
   './index.html',
